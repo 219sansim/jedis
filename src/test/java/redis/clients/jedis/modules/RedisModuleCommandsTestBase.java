@@ -1,59 +1,73 @@
 package redis.clients.jedis.modules;
 
-import static org.junit.Assume.assumeTrue;
-
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import redis.clients.jedis.Connection;
-
 import redis.clients.jedis.DefaultJedisClientConfig;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Protocol;
 import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.UnifiedJedis;
+import redis.clients.jedis.commands.CommandsTestsParameters;
 import redis.clients.jedis.exceptions.JedisConnectionException;
-import redis.clients.jedis.util.RedisProtocolUtil;
+import redis.clients.jedis.util.RedisVersionCondition;
+
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public abstract class RedisModuleCommandsTestBase {
 
+  @RegisterExtension
+  public RedisVersionCondition versionCondition = new RedisVersionCondition(hnp, DefaultJedisClientConfig.builder().build());
+
   private static final String address = System.getProperty("modulesDocker", Protocol.DEFAULT_HOST + ':' + 6479);
   protected static final HostAndPort hnp = HostAndPort.from(address);
-  protected final RedisProtocol protocol = RedisProtocolUtil.getRedisProtocol();
 
+  /**
+   * Input data for parameterized tests. In principle all subclasses of this
+   * class should be parameterized tests, to run with several versions of RESP.
+   *
+   * @see CommandsTestsParameters#respVersions()
+   */
+  protected final RedisProtocol protocol;
+
+  protected Jedis jedis;
   protected UnifiedJedis client;
 
-  public RedisModuleCommandsTestBase() {
-    super();
+  /**
+   * The RESP protocol is to be injected by the subclasses, usually via JUnit
+   * parameterized tests, because most of the subclassed tests are meant to be
+   * executed against multiple RESP versions. For the special cases where a single
+   * RESP version is relevant, we still force the subclass to be explicit and
+   * call this constructor.
+   *
+   * @param protocol The RESP protocol to use during the tests.
+   */
+  public RedisModuleCommandsTestBase(RedisProtocol protocol) {
+    this.protocol = protocol;
   }
 
   // BeforeClass
   public static void prepare() {
     try (Connection connection = new Connection(hnp)) {
-      assumeTrue("No Redis running on 6479 port.", connection.ping());
+      assumeTrue(connection.ping(), "No Redis running on " + hnp.getPort() + " port.");
     } catch (JedisConnectionException jce) {
-      assumeTrue("Could not connect to Redis running on 6479 port.", false);
+      assumeTrue(false, "Could not connect to Redis running on " + hnp.getPort() + " port.");
     }
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
-    try (Jedis jedis = new Jedis(hnp)) {
-      jedis.flushAll();
-    }
+    jedis = new Jedis(hnp, DefaultJedisClientConfig.builder().protocol(protocol).build());
+    jedis.flushAll();
     client = new UnifiedJedis(hnp, DefaultJedisClientConfig.builder().protocol(protocol).build());
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     client.close();
+    jedis.close();
   }
-//
-//  public static void tearDown() {
-//    client.close();
-//  }
-//
-//  protected static Connection createConnection() {
-//    return new Connection(hnp);
-//  }
+
 }

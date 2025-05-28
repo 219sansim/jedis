@@ -1,12 +1,16 @@
 package redis.clients.jedis.commands.unified;
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
-
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.util.SafeEncoder;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public abstract class HyperLogLogCommandsTestBase extends UnifiedJedisCommandsTestBase {
+
+  public HyperLogLogCommandsTestBase(RedisProtocol protocol) {
+    super(protocol);
+  }
 
   @Test
   public void pfadd() {

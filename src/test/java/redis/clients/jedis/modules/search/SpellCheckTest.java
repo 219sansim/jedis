@@ -1,7 +1,5 @@
 package redis.clients.jedis.modules.search;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,28 +8,34 @@ import java.util.Map;
 
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.modules.RedisModuleCommandsTestBase;
 import redis.clients.jedis.search.FTSpellCheckParams;
 import redis.clients.jedis.search.schemafields.TextField;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+@ParameterizedClass
+@MethodSource("redis.clients.jedis.commands.CommandsTestsParameters#respVersions")
 public class SpellCheckTest extends RedisModuleCommandsTestBase {
 
   private static final String index = "spellcheck";
 
-  @BeforeClass
+  @BeforeAll
   public static void prepare() {
     RedisModuleCommandsTestBase.prepare();
   }
-//
-//  @AfterClass
-//  public static void tearDown() {
-////    RedisModuleCommandsTestBase.tearDown();
-//  }
+
+  public SpellCheckTest(RedisProtocol protocol) {
+    super(protocol);
+  }
 
   private static Map<String, String> toMap(String... values) {
     Map<String, String> map = new HashMap<>();
@@ -84,14 +88,14 @@ public class SpellCheckTest extends RedisModuleCommandsTestBase {
   @Test
   public void distanceBound() {
     client.ftCreate(index, TextField.of("name"), TextField.of("body"));
-    Assert.assertThrows(JedisDataException.class, () -> client.ftSpellCheck(index, "name",
+    assertThrows(JedisDataException.class, () -> client.ftSpellCheck(index, "name",
         FTSpellCheckParams.spellCheckParams().distance(0)));
   }
 
   @Test
   public void dialectBound() {
     client.ftCreate(index, TextField.of("t"));
-    JedisDataException error = Assert.assertThrows(JedisDataException.class,
+    JedisDataException error = assertThrows(JedisDataException.class,
         () -> client.ftSpellCheck(index, "Tooni toque kerfuffle",
             FTSpellCheckParams.spellCheckParams().dialect(0)));
     MatcherAssert.assertThat(error.getMessage(),

@@ -1,12 +1,23 @@
 package redis.clients.jedis.commands.jedis;
 
-import static org.junit.Assert.assertEquals;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 
+
+import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.util.SafeEncoder;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@ParameterizedClass
+@MethodSource("redis.clients.jedis.commands.CommandsTestsParameters#respVersions")
 public class HyperLogLogCommandsTest extends JedisCommandsTestBase {
+
+  public HyperLogLogCommandsTest(RedisProtocol protocol) {
+    super(protocol);
+  }
 
   @Test
   public void pfadd() {

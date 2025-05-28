@@ -1,11 +1,10 @@
 package redis.clients.jedis.commands.unified;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START;
 import static redis.clients.jedis.params.ScanParams.SCAN_POINTER_START_BINARY;
 import static redis.clients.jedis.util.AssertUtil.assertByteArrayCollectionContainsAll;
@@ -19,8 +18,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Test;
+import io.redis.test.annotations.SinceRedisVersion;
 
+import org.junit.jupiter.api.Test;
+import redis.clients.jedis.RedisProtocol;
 import redis.clients.jedis.params.ScanParams;
 import redis.clients.jedis.resps.ScanResult;
 
@@ -38,6 +39,10 @@ public abstract class SetCommandsTestBase extends UnifiedJedisCommandsTestBase {
   final byte[] bbar2 = { 0x05, 0x06, 0x07, 0x08, 0x0B };
   final byte[] bbar3 = { 0x05, 0x06, 0x07, 0x08, 0x0C };
   final byte[] bbarstar = { 0x05, 0x06, 0x07, 0x08, '*' };
+
+  public SetCommandsTestBase(RedisProtocol protocol) {
+    super(protocol);
+  }
 
   @Test
   public void sadd() {
@@ -356,6 +361,7 @@ public abstract class SetCommandsTestBase extends UnifiedJedisCommandsTestBase {
   }
 
   @Test
+  @SinceRedisVersion(value="7.0.0")
   public void sintercard() {
     jedis.sadd("foo", "a");
     jedis.sadd("foo", "b");
@@ -549,7 +555,7 @@ public abstract class SetCommandsTestBase extends UnifiedJedisCommandsTestBase {
 
     member = jedis.srandmember("bar");
     assertNull(member);
-    
+
     members = jedis.srandmember("bar", 2);
     assertEquals(0, members.size());
 
@@ -561,13 +567,13 @@ public abstract class SetCommandsTestBase extends UnifiedJedisCommandsTestBase {
 
     assertTrue(Arrays.equals(ba, bmember) || Arrays.equals(bb, bmember));
     assertEquals(2, jedis.smembers(bfoo).size());
-    
+
     List<byte[]> bmembers = jedis.srandmember(bfoo, 2);
     assertEquals(2, bmembers.size());
 
     bmember = jedis.srandmember(bbar);
     assertNull(bmember);
-    
+
     members = jedis.srandmember("bbar", 2);
     assertEquals(0, members.size());
   }
